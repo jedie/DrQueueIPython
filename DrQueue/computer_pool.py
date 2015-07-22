@@ -25,10 +25,10 @@ def get_queue_pools():
 class ComputerPool(dict):
     """Subclass of dict for collecting Pool attribute values."""
 
-    def __init__(self, name, engine_names=[]):
+    def __init__(self, name, engine_names=None):
         dict.__init__(self)
 
-        if type(engine_names).__name__ != 'list':
+        if isinstance(engine_names, list):
             raise ValueError("argument is not of type list")
 
         # mandatory elements
