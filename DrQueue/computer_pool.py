@@ -10,7 +10,6 @@ Licensed under GNU General Public License version 3. See LICENSE for details.
 """
 
 import os
-import getpass
 
 import pymongo
 import bson
@@ -18,12 +17,12 @@ import bson
 
 class ComputerPool(dict):
     """Subclass of dict for collecting Pool attribute values."""
+
     def __init__(self, name, engine_names=[]):
         dict.__init__(self)
 
         if type(engine_names).__name__ != 'list':
             raise ValueError("argument is not of type list")
-            return False
 
         # mandatory elements
         pool = {
@@ -35,7 +34,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def store_db(pool):
-
         """store pool information in MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -46,7 +44,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def update_db(pool):
-
         """update pool information in MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -57,7 +54,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def query_db(pool_id):
-
         """query pool information from MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -67,7 +63,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def delete_from_db(pool_id):
-
         """delete pool information from MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -76,7 +71,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def query_poolnames():
-
         """query pool names from MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -88,7 +82,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def query_pool_by_name(pool_name):
-
         """query pool information from MongoDB by name"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -98,7 +91,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def query_pool_list():
-
         """query list of pools from MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
@@ -110,7 +102,6 @@ class ComputerPool(dict):
 
     @staticmethod
     def query_pool_members(pool_name):
-
         """query list of members of pool from MongoDB"""
         connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
         db = connection['ipythondb']
