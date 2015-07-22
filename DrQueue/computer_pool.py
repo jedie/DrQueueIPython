@@ -15,6 +15,13 @@ import pymongo
 import bson
 
 
+def get_queue_pools():
+    connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
+    db = connection['ipythondb']
+    pools = db['drqueue_pools']
+    return pools
+
+
 class ComputerPool(dict):
     """Subclass of dict for collecting Pool attribute values."""
 
@@ -31,13 +38,10 @@ class ComputerPool(dict):
              }
         self.update(pool)
 
-
     @staticmethod
     def store_db(pool):
         """store pool information in MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         pool_id = pools.insert(pool)
         pool['_id'] = str(pool['_id'])
         return pool_id
@@ -45,9 +49,7 @@ class ComputerPool(dict):
     @staticmethod
     def update_db(pool):
         """update pool information in MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         pool_id = pools.save(pool)
         pool['_id'] = str(pool['_id'])
         return pool_id
@@ -55,26 +57,20 @@ class ComputerPool(dict):
     @staticmethod
     def query_db(pool_id):
         """query pool information from MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         pool = pools.find_one({"_id": bson.ObjectId(pool_id)})
         return pool
 
     @staticmethod
     def delete_from_db(pool_id):
         """delete pool information from MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         return pools.remove({"_id": bson.ObjectId(pool_id)})
 
     @staticmethod
     def query_poolnames():
         """query pool names from MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         names = []
         for pool in pools.find():
             names.append(pool['name'])
@@ -83,18 +79,14 @@ class ComputerPool(dict):
     @staticmethod
     def query_pool_by_name(pool_name):
         """query pool information from MongoDB by name"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         pool = pools.find_one({"name": pool_name})
         return pool
 
     @staticmethod
     def query_pool_list():
         """query list of pools from MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         pool_arr = []
         for pool in pools.find():
             pool_arr.append(pool)
@@ -103,9 +95,7 @@ class ComputerPool(dict):
     @staticmethod
     def query_pool_members(pool_name):
         """query list of members of pool from MongoDB"""
-        connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
-        db = connection['ipythondb']
-        pools = db['drqueue_pools']
+        pools = get_queue_pools()
         pool = pools.find_one({"name": pool_name})
         if pool == None:
             return None
