@@ -1,6 +1,13 @@
-import os, glob, shutil, sys, pwd, grp
+import os, glob, shutil, sys
 from setuptools import setup
 from distutils.core import setup, Command
+
+
+try:
+    import pwd, grp
+except ImportError:
+    # e.g. under windows
+    pwd = grp = None
 
 
 def read(fname):
@@ -97,10 +104,10 @@ class CreateDrQueueWorkDirs(Command):
             shutil.copy(template, drqueue_etc)
 
         # set to user-supplied user / group
-        if self.owner != None:
+        if self.owner != None and pwd is not None:
             uid = pwd.getpwnam(self.owner)[2]
             recursive_chown(drqueue_root, uid, -1)
-        if self.group != None:
+        if self.group != None and grp is not None:
             gid = grp.getgrnam(self.group)[2]
             recursive_chown(drqueue_root, -1, gid)
 
