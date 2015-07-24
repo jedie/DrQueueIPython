@@ -10,12 +10,25 @@ Licensed under GNU General Public License version 3. See LICENSE for details.
 """
 
 import os
+import logging
 
-import pymongo
-import bson
+
+log = logging.getLogger(__name__)
+
+
+try:
+    import pymongo
+    import bson
+except ImportError as err:
+    log.debug("Can't import pymongo/bson: %s" % err)
+    pymongo = bson = None
+
 
 
 def get_queue_pools():
+    if pymongo is None:
+        raise RuntimeError("pymongo is needed, please install it!")
+
     connection = pymongo.Connection(os.getenv('DRQUEUE_MONGODB'))
     db = connection['ipythondb']
     pools = db['drqueue_pools']
