@@ -129,7 +129,11 @@ setup(
     url = "https://ssl.drqueue.org/redmine/projects/drqueueipython",
     packages = ['DrQueue'],
     scripts = allscripts,
-    install_requires = ['ipython>=0.13', 'pyzmq>=2.1.4'],
+    install_requires = [
+        'ipython<3', # TODO: upgrade to newest ipython version
+        'pyzmq>=2.1.4',
+        'pymongo<3' # TODO: upgrade to newest pymongo version
+    ],
     long_description = read('README.md'),
     classifiers = [
         "Development Status :: 3 - Alpha",
