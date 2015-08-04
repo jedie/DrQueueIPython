@@ -111,10 +111,12 @@ def main():
         print("IPython engine started with PID " + str(IPENGINE_PID) + ". Logging to " + IPENGINE_LOGPATH + ".")
 
         # wait for process to exit
-        os.waitpid(IPENGINE_PID, 0)
+        returncode = ipengine_daemon.wait()
+        print("IPython was shut down with returncode: %s" % returncode)
 
-        print("IPython was shut down. Restarting ...")
-        time.sleep(5)
+        sec = 5
+        print("Restarting IPython after %s sec..." % sec)
+        time.sleep(sec)
 
 
 if __name__== "__main__":
