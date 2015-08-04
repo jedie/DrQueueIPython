@@ -39,8 +39,6 @@ SIGINT_SENT = False
 IPENGINE_PID = None
 IPENGINE_LOGPATH = os.path.join(os.environ["DRQUEUE_ROOT"], "logs", "ipengine_" + SLAVE_IP + ".log")
 IPENGINE_LOGFILE = open(IPENGINE_LOGPATH, "ab")
-dist_egg = pkg_resources.get_distribution("DrQueueIPython")
-STARTUP_SCRIPT = dist_egg.get_resource_filename(__name__, "EGG-INFO/scripts/get_slave_information.py")
 
 
 def sig_handler(signum, frame):
@@ -82,7 +80,7 @@ def run_command(command):
         message = "OSError({0}) while executing command: {1}\n".format(errno, strerror)
         IPENGINE_LOGFILE.write(message)
         raise OSError(message)
-        return False
+
     return p
 
 
@@ -105,7 +103,7 @@ def main():
     # restart ipengine if it was shut down by IPython
     while True:
         # start IPython engine along with startup script
-        command = "ipengine --url tcp://" + MASTER_IP + ":10101 -s " + STARTUP_SCRIPT
+        command = "ipengine --url tcp://" + MASTER_IP + ":10101 -s get_slave_information.py"
         ipengine_daemon = run_command(command)
         IPENGINE_PID = ipengine_daemon.pid
         print("IPython engine started with PID " + str(IPENGINE_PID) + ". Logging to " + IPENGINE_LOGPATH + ".")
