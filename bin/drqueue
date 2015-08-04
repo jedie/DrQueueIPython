@@ -943,8 +943,6 @@ def slave_daemon(args):
 
     ipengine_logpath = os.path.join(os.environ["DRQUEUE_ROOT"], "logs", "ipengine_" + slave_ip + ".log")
     ipengine_logfile = open(ipengine_logpath, "ab")
-    dist_egg = pkg_resources.get_distribution("DrQueueIPython")
-    startup_script = dist_egg.get_resource_filename(__name__, "EGG-INFO/scripts/get_slave_information.py")
 
     # register signal handler for SIGINT & SIGTERM
     signal.signal(signal.SIGTERM, slave_sig_handler)
@@ -957,7 +955,7 @@ def slave_daemon(args):
     while True:
         # start IPython engine along with startup script
         print("Connecting to DrQueue master at " + master_ip + ".")
-        command = "ipengine -s " + startup_script
+        command = "ipengine -s get_slave_information.py"
 
         if (args.no_ssh == True) or LOCALHOST:
             command += " --ssh="
