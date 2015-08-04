@@ -244,22 +244,22 @@ class Client():
         now = int(time.time())
         # check existence and age of info
         if (engine != None) and (now <= engine['created_at'] + cache_time):
-            log.DEBUG("Engine %i was found in DB and info is up-to-date." % engine_id)
+            log.debug("Engine %i was found in DB and info is up-to-date." % engine_id)
             return engine
         # store new info
         else:
             if engine != None:
-                log.DEBUG("Engine %i was found in DB, but info needs to be updated." % engine_id)
+                log.debug("Engine %i was found in DB, but info needs to be updated." % engine_id)
             else:
-                log.DEBUG("Engine %i was not found in DB." % engine_id)
+                log.debug("Engine %i was not found in DB." % engine_id)
             # run command only on specific computer
             try:
                 dview = self.ip_client[engine_id]
             except IndexError:
-                log.DEBUG("Engine with id %i unknown." % engine_id)
+                log.debug("Engine with id %i unknown." % engine_id)
                 # delete old entry from database
                 DrQueueComputer.delete_from_db_by_engine_id(engine_id)
-                log.DEBUG("Engine with id %i deleted from database." % engine_id)
+                log.debug("Engine with id %i deleted from database." % engine_id)
                 new_engine = None
             else:
                 # run command in async mode
@@ -271,10 +271,10 @@ class Client():
                     ar.get(timeout)
                 except Exception:
                     if engine != None:
-                        log.DEBUG("Update request for engine %i timed out. Using old information from DB." % engine_id)
+                        log.debug("Update request for engine %i timed out. Using old information from DB." % engine_id)
                         new_engine = engine
                     else:
-                        log.DEBUG("Information request for engine %i timed out." % engine_id)
+                        log.debug("Information request for engine %i timed out." % engine_id)
                         new_engine = None
                 else:
                     # get computer dict from engine namespace
@@ -300,7 +300,7 @@ class Client():
         # update database entry
         computer['pools'] = pool_list
         DrQueueComputer.store_db(computer)
-        log.DEBUG("Engine " + str(computer['engine_id']) + " added to pools " + pool_str + ".")
+        log.debug("Engine " + str(computer['engine_id']) + " added to pools " + pool_str + ".")
         return computer
 
 
