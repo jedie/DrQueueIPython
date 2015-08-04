@@ -10,7 +10,7 @@ Licensed under GNU General Public License version 3. See LICENSE for details.
 """
 
 import string, argparse, getpass, os, signal, subprocess, pkg_resources, sys
-import platform, time, socket, datetime, glob, pickle
+import platform, time, socket, datetime, glob, pickle, psutil
 from collections import deque
 from pprint import pprint
 import DrQueue
@@ -28,11 +28,13 @@ CACHE_TIME = 60
 ADMIN_USER = 'root'
 DRQUEUE_SSH_USER = ''
 DRQUEUE_ROOT_DEFAULT = '/usr/local/drqueue'
+LOCALHOST = False
 
 
 def main():
     global DRQUEUE_ROOT_DEFAULT
     global DRQUEUE_SSH_USER
+    global LOCALHOST
 
     # create parent parser for global options
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -204,42 +206,58 @@ def main():
     if args.func != master_daemon:
         # use DRQUEUE_MASTER if set
         if "DRQUEUE_MASTER" in os.environ:
-            #master_ip = os.environ["DRQUEUE_MASTER"]
-            localhost = False
+            if os.environ["DRQUEUE_MASTER"] in ['127.0.0.1', 'localhost']:
+                LOCALHOST = True
+            else:
+                LOCALHOST = False
         else:
             # determine DRQUEUE_MASTER from engine settings file
             eo_file = os.path.join(os.environ['IPYTHONDIR'], 'profile_default/security/ipcontroller-engine.json')
             for line in open(eo_file).readlines():
                 if 'ssh' in line:
                     # extract master IP
-                    master = line.split(':')[1].split('@')[1].split('\"')[0]
-                    if args.verbose:
-                        print('DEBUG: master from ipcontroller-engine.json: ' + master)
-                    # set DRQUEUE_MASTER in environment
-                    os.environ["DRQUEUE_MASTER"] = master
-                    conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    conn.connect((master, 1))
-                    conn_ip = conn.getsockname()[0]
-                    if args.verbose:
-                        print('DEBUG: IP for connecting to master: ' + conn_ip)
-                    # skip creation of SSH tunnel when on same host
-                    if conn_ip == master:
-                        localhost = True
+                    ssh_conn = line.split(':')[1].split('@')
+                    if len(ssh_conn) == 2:
+                        master = ssh_conn[1].split('\"')[0]
+                        if args.verbose:
+                            print('DEBUG: master address from ipcontroller-engine.json: ' + master)
+                        DRQUEUE_SSH_USER = ssh_conn[0].split('\"')[1]
+                        if args.verbose:
+                            print('DEBUG: SSH user from ipcontroller-engine.json: ' + DRQUEUE_SSH_USER)
+                        break
                     else:
-                        localhost = False
-
-        # determine DRQUEUE_SSH_USER from engine settings file
-        eo_file = os.path.join(os.environ['IPYTHONDIR'], 'profile_default/security/ipcontroller-engine.json')
-        for line in open(eo_file).readlines():
-            if 'ssh' in line:
-                # extract SSH user
-                DRQUEUE_SSH_USER = line.split(':')[1].split('@')[0].split('\"')[1]
+                        continue
+                if 'interface' in line:
+                    # extract master IP
+                    tcp_conn = line.split(':')
+                    if len(tcp_conn) == 3:
+                        master = tcp_conn[2].split('//')[1].split('\"')[0]
+                        if args.verbose:
+                            print('DEBUG: master from ipcontroller-engine.json: ' + master)
+                        break
+                    else:
+                        master = '127.0.0.1'
+                        if args.verbose:
+                            print('DEBUG: master not found in ipcontroller-engine.json. Using ' + master + ' instead.')
+            # set DRQUEUE_MASTER in environment
+            os.environ["DRQUEUE_MASTER"] = master
+            # check if master IP is configured on this machine
+            conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            conn.connect((master, 1))
+            conn_ip = conn.getsockname()[0]
+            if args.verbose:
+                print('DEBUG: IP for connecting to master: ' + conn_ip)
+            # skip creation of SSH tunnel when on same host
+            if conn_ip == master:
+                LOCALHOST = True
                 if args.verbose:
-                    print('DEBUG: SSH user from ipcontroller-engine.json: ' + DRQUEUE_SSH_USER)
+                    print('DEBUG: running on the same IP as DRQUEUE_MASTER')
+            else:
+                LOCALHOST = False
 
     # start SSH tunnel for MongoDB connection
     # skip if requested, if running master daemon or when on same host
-    if (args.no_ssh != True) and (args.func != master_daemon) and (localhost == False):
+    if (args.no_ssh != True) and (args.func != master_daemon) and (LOCALHOST == False):
         if args.verbose:
             print('DEBUG: start_ssh_tunnel()')
         start_ssh_tunnel(args.verbose)
@@ -903,6 +921,7 @@ def master_daemon(args):
 
 def slave_daemon(args):
     global IPENGINE_PID
+    global LOCALHOST
 
     # connect to specific master if requested
     if "DRQUEUE_MASTER" not in os.environ:
@@ -937,6 +956,9 @@ def slave_daemon(args):
         print("Connecting to DrQueue master at " + master_ip + ".")
         command = "ipengine -s " + startup_script
 
+        if (args.no_ssh == True) or LOCALHOST:
+            command += " --ssh="
+
         if args.verbose:
             print command
 
@@ -956,16 +978,16 @@ def slave_daemon(args):
 
 
 def process_exists(process_name):
-    ps = subprocess.Popen("ps -A", shell=True, stdout=subprocess.PIPE)
-    ps_pid = ps.pid
-    output = ps.stdout.read()
-    ps.stdout.close()
-    ps.wait()
-
-    for line in output.split("\n"):
-        if line != "" and line != None:
-            if process_name in line:
-                return True
+    for proc in psutil.process_iter():
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'cmdline'])
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            if pinfo['cmdline'] is not None:
+                cmdline = " ".join(pinfo['cmdline'])
+                if process_name in cmdline:
+                    return True
     return False
 
 

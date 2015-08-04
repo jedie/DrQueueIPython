@@ -109,7 +109,7 @@ class CreateDrQueueWorkDirs(Command):
 
         print("\nAdd the following environment variables to your user profile:")
         print("DRQUEUE_ROOT=" + drqueue_root)
-        print("IPYTHON_DIR=" + drqueue_ipython)
+        print("IPYTHONDIR=" + drqueue_ipython)
 
 
 # register extra command
@@ -132,7 +132,8 @@ setup(
     install_requires = [
         'ipython<3', # TODO: upgrade to newest ipython version
         'pyzmq>=2.1.4',
-        'pymongo<3' # TODO: upgrade to newest pymongo version
+        'pymongo<3', # TODO: upgrade to newest pymongo version
+        'psutil>=3.1.1'
     ],
     long_description = read('README.md'),
     classifiers = [
